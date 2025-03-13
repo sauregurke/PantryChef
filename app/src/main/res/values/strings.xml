@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Pantry Chef</string>
+    <string name="your_ingredient_list">Your Ingredient List</string>
+    <string name="clear_ingredients">Clear Ingredients</string>
+    <string name="add_more_ingredients">Add More Ingredients</string>
+    <string name="find_recipes">Find Recipes</string>
+    <string name="delete_ingredient">Delete Ingredient</string>
+    <string name="edit_ingredient">Edit Ingredient</string>
+    <string name="recipes">Recipes</string>
+</resources>
