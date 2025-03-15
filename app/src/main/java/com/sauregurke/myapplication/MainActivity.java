@@ -1,5 +1,7 @@
 package com.sauregurke.myapplication;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -9,10 +11,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,14 +27,14 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,17 +59,12 @@ public class MainActivity extends AppCompatActivity {
         rTextButton = findViewById(R.id.scanTextButton);
         rGraphicOverlay = findViewById(R.id.graphic_overlay);
 
-        rTextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                runTextRecognition();
-            }
-        });
+        rTextButton.setOnClickListener(v -> runTextRecognition());
     }
 
     public void writeIngredient(View view){
 
-        EditText input = (EditText) findViewById(R.id.ingredientEditText);
+        EditText input = findViewById(R.id.ingredientEditText);
         Context context = getApplicationContext();
 
         ingredientDatabase = context.openOrCreateDatabase("ingredients",
@@ -99,20 +94,17 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Choose an option");
         builder.setItems(new CharSequence[]{"Take Photo", "Choose from Gallery", "Cancel"},
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which) {
-                            case 0: // Take a photo
-                                openCamera();
-                                break;
-                            case 1: // Pick from gallery
-                                openGallery();
-                                break;
-                            case 2: // Cancel
-                                dialog.dismiss();
-                                break;
-                        }
+                (dialog, which) -> {
+                    switch (which) {
+                        case 0: // New photo
+                            openCamera();
+                            break;
+                        case 1: // Pick from gallery
+                            openGallery();
+                            break;
+                        case 2: // Nevermind
+                            dialog.dismiss();
+                            break;
                     }
                 });
         builder.show();
@@ -120,79 +112,93 @@ public class MainActivity extends AppCompatActivity {
 
     private void openCamera() {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(cameraIntent, 0);
+        openCameraActivityLauncher.launch(cameraIntent);
     }
+
+    ActivityResultLauncher<Intent> openCameraActivityLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    try {
+                        Intent data = result.getData();
+                        Bitmap selectedImage = (Bitmap) data.getExtras().get("data");
+
+                        presentImage(selectedImage);
+
+                        ImageView imageView = findViewById(R.id.receiptImageView);
+                        imageView.setVisibility(View.VISIBLE);
+                    } catch (NullPointerException e) {
+                        Toast.makeText(getApplicationContext(),
+                                "Please try to select an image again.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+    );
+
 
     private void openGallery() {
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        galleryIntent.setType("image/*");
-        startActivityForResult(galleryIntent, 1);
+        openGalleryActivityLauncher.launch(galleryIntent);
     }
 
+    ActivityResultLauncher<Intent> openGalleryActivityLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    assert result.getData() != null;
+                    Uri selectedImage = result.getData().getData();
+
+                    if (selectedImage != null) {
+                        try {
+                            InputStream imageStream =
+                                    getContentResolver().openInputStream(selectedImage);
+
+                            Bitmap bitmap = BitmapFactory.decodeStream(imageStream);
+
+                            presentImage(bitmap);
+
+                            ImageView imageView = findViewById(R.id.receiptImageView);
+                            imageView.setImageBitmap(bitmap);
+                            imageView.setVisibility(View.VISIBLE);
+
+                        } catch (IOException e) {
+                            Toast.makeText(getApplicationContext(),
+                                    "Please try to select an image again.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            }
+    );
+
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         switch (requestCode) {
             case MULTIPLE_PERMISSIONS_REQUEST_ID:
                 if (ContextCompat.checkSelfPermission(MainActivity.this,
-                        android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        android.Manifest.permission.CAMERA)
+                        != PackageManager.PERMISSION_GRANTED) {
 
                     Toast.makeText(getApplicationContext(),
                                     "PantryChef needs camera access to work.",
                                     Toast.LENGTH_SHORT).show();
-
                 } else if (ContextCompat.checkSelfPermission(MainActivity.this,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
 
                     Toast.makeText(getApplicationContext(),
-                            "PantryChef needs access to your storage to work.",
+                            "PantryChef needs access to your storage to store your ingredients.",
                             Toast.LENGTH_SHORT).show();
-
                 } else {
                     chooseImage(MainActivity.this);
                 }
                 break;
-        }
-    }
-    
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_CANCELED) {
-            switch (requestCode) {
-                case 0:
-                    if (resultCode == RESULT_OK && data != null) {
-
-                        Bitmap selectedImage = (Bitmap) data.getExtras().get("data");
-
-                        presentImage(selectedImage);
-                        ImageView imageView = findViewById(R.id.receiptImageView);
-                        imageView.setVisibility(View.VISIBLE);
-                    }
-                    break;
-                case 1:
-                    if (resultCode == RESULT_OK && data != null) {
-                        Uri selectedImage = data.getData();
-                        String[] filePathColumn = {MediaStore.Images.Media.DATA};
-                        if (selectedImage != null) {
-                            Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
-                            if (cursor != null) {
-                                cursor.moveToFirst();
-
-                                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                                String picturePath = cursor.getString(columnIndex);
-                                getImage(picturePath);
-                                ImageView imageView = (ImageView) findViewById(R.id.receiptImageView);
-                                imageView.setVisibility(View.VISIBLE);
-                                cursor.close();
-                            }
-                        }
-
-                    }
-                    break;
-            }
         }
     }
 
@@ -232,21 +238,15 @@ public class MainActivity extends AppCompatActivity {
         rTextButton.setEnabled(false);
         recognizer.process(image)
                 .addOnSuccessListener(
-                        new OnSuccessListener<Text>() {
-                            @Override
-                            public void onSuccess(Text texts) {
-                                rTextButton.setEnabled(true);
-                                processTextRecognitionResult(texts);
-                            }
+                        texts -> {
+                            rTextButton.setEnabled(true);
+                            processTextRecognitionResult(texts);
                         })
                 .addOnFailureListener(
-                        new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                // Task failed with an exception
-                                rTextButton.setEnabled(true);
-                                e.printStackTrace();
-                            }
+                        e -> {
+                            // Task failed with an exception
+                            rTextButton.setEnabled(true);
+                            e.printStackTrace();
                         });
     }
 
@@ -261,7 +261,9 @@ public class MainActivity extends AppCompatActivity {
         List<Text.TextBlock> blocks = texts.getTextBlocks();
 
         if (blocks.size() == 0) {
-            showToast("No text found.");
+            Toast.makeText(getApplicationContext(),
+                    "No text could be found. Please, try again.",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
         List<String> textblocks = new ArrayList<>();
@@ -324,10 +326,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showToast(String message) {
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-    }
-
     private Integer getImageMaxWidth() {
         if (rImageMaxWidth == null) {
             rImageMaxWidth = rImageView.getWidth();
@@ -354,49 +352,15 @@ public class MainActivity extends AppCompatActivity {
         return new Pair<>(targetWidth, targetHeight);
     }
 
-    public void getImage(String imageName) {
-        presentImage(imageName);
-    }
-
-    public void presentImage(String imageName) {
-        rGraphicOverlay.clear();
-        rSelectedImage = BitmapFactory.decodeFile(imageName);
-        if (rSelectedImage != null) {
-            // Get View dimensions
-            Pair<Integer, Integer> targetedSize = getTargetedWidthHeight();
-
-            int targetWidth = targetedSize.first;
-            int maxHeight = targetedSize.second;
-
-            // Determine how much to scale down the image
-            float scaleFactor =
-                    Math.max(
-                            (float) rSelectedImage.getWidth() / (float) targetWidth,
-                            (float) rSelectedImage.getHeight() / (float) maxHeight);
-
-            Bitmap resizedBitmap =
-                    Bitmap.createScaledBitmap(
-                            rSelectedImage,
-                            (int) (rSelectedImage.getWidth() / scaleFactor),
-                            (int) (rSelectedImage.getHeight() / scaleFactor),
-                            true);
-
-            rImageView.setImageBitmap(resizedBitmap);
-            rSelectedImage = resizedBitmap;
-        }
-    }
-
     public void presentImage(Bitmap imageMap) {
         rGraphicOverlay.clear();
         rSelectedImage = imageMap;
         if (rSelectedImage != null) {
-            // View dimensions
             Pair<Integer, Integer> targetedSize = getTargetedWidthHeight();
 
             int targetWidth = targetedSize.first;
             int maxHeight = targetedSize.second;
 
-            // Determine how much to scale down the image
             float scaleFactor =
                     Math.max(
                             (float) rSelectedImage.getWidth() / (float) targetWidth,
@@ -413,6 +377,4 @@ public class MainActivity extends AppCompatActivity {
             rSelectedImage = resizedBitmap;
         }
     }
-
-
 }
