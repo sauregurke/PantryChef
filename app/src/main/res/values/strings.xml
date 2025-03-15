@@ -7,4 +7,10 @@
     <string name="delete_ingredient">Delete Ingredient</string>
     <string name="edit_ingredient">Edit Ingredient</string>
     <string name="recipes">Recipes</string>
+    <string name="view_your_list">View your list</string>
+    <string name="pantry_chef">Pantry Chef</string>
+    <string name="add_your_ingredients_here">Add your ingredients here</string>
+    <string name="enter_an_ingredient">Enter an ingredient</string>
+    <string name="add_from_receipt">Or, add from receipt</string>
+    <string name="save_ingredient_to_your_list">Save ingredient to your list</string>
 </resources>

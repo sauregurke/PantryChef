@@ -1,15 +1,14 @@
 package com.sauregurke.myapplication;
 
 public class Recipe {
-    private String id;
-    private String title;
-    private String image;
+    private final String id;
+    private final String title;
     private String linkToWebpage;
 
-    public Recipe(String id, String title, String image, String linkToWebpage){
+    public Recipe(String id, String title, String linkToWebpage){
         this.id = id;
         this.title = title;
-        this.image = image;
+        this.linkToWebpage = linkToWebpage;
     }
 
     public String getid(){

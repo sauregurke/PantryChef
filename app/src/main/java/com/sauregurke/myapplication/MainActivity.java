@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                         case 1: // Pick from gallery
                             openGallery();
                             break;
-                        case 2: // Nevermind
+                        case 2: // Never mind
                             dialog.dismiss();
                             break;
                     }
@@ -119,18 +119,22 @@ public class MainActivity extends AppCompatActivity {
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (result.getResultCode() == RESULT_OK) {
-                    try {
-                        Intent data = result.getData();
-                        Bitmap selectedImage = (Bitmap) data.getExtras().get("data");
+                    assert result.getData() != null;
+                    Intent data = result.getData();
 
-                        presentImage(selectedImage);
+                    if (data.getExtras() != null) {
+                        try {
+                            Bitmap selectedImage = (Bitmap) data.getExtras().get("data");
 
-                        ImageView imageView = findViewById(R.id.receiptImageView);
-                        imageView.setVisibility(View.VISIBLE);
-                    } catch (NullPointerException e) {
-                        Toast.makeText(getApplicationContext(),
-                                "Please try to select an image again.",
-                                Toast.LENGTH_SHORT).show();
+                            presentImage(selectedImage);
+
+                            ImageView imageView = findViewById(R.id.receiptImageView);
+                            imageView.setVisibility(View.VISIBLE);
+                        } catch (NullPointerException e) {
+                            Toast.makeText(getApplicationContext(),
+                                    "Please try to select an image again.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
             }
@@ -179,26 +183,24 @@ public class MainActivity extends AppCompatActivity {
 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        switch (requestCode) {
-            case MULTIPLE_PERMISSIONS_REQUEST_ID:
-                if (ContextCompat.checkSelfPermission(MainActivity.this,
-                        android.Manifest.permission.CAMERA)
-                        != PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == MULTIPLE_PERMISSIONS_REQUEST_ID) {
+            if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
 
-                    Toast.makeText(getApplicationContext(),
-                                    "PantryChef needs camera access to work.",
-                                    Toast.LENGTH_SHORT).show();
-                } else if (ContextCompat.checkSelfPermission(MainActivity.this,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(getApplicationContext(),
+                        "PantryChef needs camera access to scan your receipt.",
+                        Toast.LENGTH_SHORT).show();
+            } else if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
 
-                    Toast.makeText(getApplicationContext(),
-                            "PantryChef needs access to your storage to store your ingredients.",
-                            Toast.LENGTH_SHORT).show();
-                } else {
-                    chooseImage(MainActivity.this);
-                }
-                break;
+                Toast.makeText(getApplicationContext(),
+                        "PantryChef needs access to your storage to store your ingredients.",
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                chooseImage(MainActivity.this);
+            }
         }
     }
 
@@ -215,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (!listPermissionsNeeded.isEmpty()) {
             ActivityCompat.requestPermissions(context,
-                    listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]),
+                    listPermissionsNeeded.toArray(new String[0]),
                     MULTIPLE_PERMISSIONS_REQUEST_ID);
             return false;
         }
@@ -262,15 +264,15 @@ public class MainActivity extends AppCompatActivity {
 
         if (blocks.size() == 0) {
             Toast.makeText(getApplicationContext(),
-                    "No text could be found. Please, try again.",
+                    "No text could be found.",
                     Toast.LENGTH_SHORT).show();
             return;
         }
-        List<String> textblocks = new ArrayList<>();
+        List<String> textBlocks = new ArrayList<>();
         rGraphicOverlay.clear();
         for (int i = 0; i < blocks.size(); i++) {
             List<Text.Line> lines = blocks.get(i).getLines();
-            String word = "";
+            StringBuilder word = new StringBuilder();
             for (int j = 0; j < lines.size(); j++) {
                 List<Text.Element> elements = lines.get(j).getElements();
                 for (int k = 0; k < elements.size(); k++) {
@@ -280,17 +282,17 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     if(isUpperCase(elements.get(k).getText())){
-                        word += elements.get(k).getText();
-                        if(k != elements.size()-1 && !word.equals("") && word.length() > 1){
-                            word += " ";
+                        word.append(elements.get(k).getText());
+                        if(k != elements.size()-1 && !word.toString().equals("") && word.length() > 1){
+                            word.append(" ");
                         }
                     }
 
                 }
-                if(!word.equals("") && !word.equals(" ")) {
-                    textblocks.add(word);
+                if(!word.toString().equals("") && !word.toString().equals(" ")) {
+                    textBlocks.add(word.toString());
                 }
-                word = "";
+                word = new StringBuilder();
             }
         }
 
@@ -307,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
                 null);
 
         DBHelper db = new DBHelper(ingredientDatabase);
-        ArrayList<String> removals = new ArrayList<String>();
+        ArrayList<String> removals = new ArrayList<>();
         removals.add("DATE");
         removals.add("SPECIAL");
         removals.add("NET");
@@ -318,11 +320,11 @@ public class MainActivity extends AppCompatActivity {
         removals.add("TOTAL");
         removals.add("CASH");
         removals.add("CHANGE");
-        textblocks.removeAll(removals);
-        Log.i("checkText", String.valueOf(textblocks));
+        textBlocks.removeAll(removals);
+        Log.i("checkText", String.valueOf(textBlocks));
 
-        for (int i = 0; i < textblocks.size(); i++) {
-            db.writeIngredient(textblocks.get(i), "user");
+        for (int i = 0; i < textBlocks.size(); i++) {
+            db.writeIngredient(textBlocks.get(i), "user");
         }
     }
 

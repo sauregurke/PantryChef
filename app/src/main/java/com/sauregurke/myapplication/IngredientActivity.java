@@ -1,14 +1,11 @@
 package com.sauregurke.myapplication;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -50,87 +47,71 @@ public class IngredientActivity extends AppCompatActivity {
                 displayIngredients);
         listView.setAdapter(adapter);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listView.setOnItemClickListener((adapterView, view, position, id) -> {
+            PopupMenu menu = new PopupMenu(IngredientActivity.this, view);
 
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                PopupMenu menu = new PopupMenu(IngredientActivity.this, view);
+            menu.getMenuInflater().inflate(R.menu.ingredient_menu, menu.getMenu());
 
-                menu.getMenuInflater().inflate(R.menu.ingredient_menu, menu.getMenu());
+            menu.setOnMenuItemClickListener(menuItem -> {
+                if (Objects.equals(menuItem.getTitle(), "@string/delete_ingredient")) {
+                    Context context1 = getApplicationContext();
+                    sqLiteDatabase = context1.openOrCreateDatabase(
+                            "ingredients",
+                            Context.MODE_PRIVATE,
+                            null);
 
-                menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem menuItem) {
-                        if (Objects.equals(menuItem.getTitle(), "@string/delete_ingredient")) {
-                            Context context = getApplicationContext();
-                            sqLiteDatabase = context.openOrCreateDatabase(
-                                    "ingredients",
-                                    Context.MODE_PRIVATE,
-                                    null);
+                    DBHelper db1 = new DBHelper(sqLiteDatabase);
 
-                            DBHelper db = new DBHelper(sqLiteDatabase);
+                    Object itemToRemove = adapter.getItem(position);
+                    assert itemToRemove != null;
+                    String stringToRemove = itemToRemove.toString();
 
-                            Object itemToRemove = adapter.getItem(position);
-                            String stringToRemove = itemToRemove.toString();
+                    adapter.remove(itemToRemove);
+                    db1.deleteIngredient(stringToRemove);
 
-                            adapter.remove(itemToRemove);
-                            db.deleteIngredient(stringToRemove);
+                    sqLiteDatabase.close();
+                }
 
-                            sqLiteDatabase.close();
-                            return true;
-                        }
+                else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(
+                            IngredientActivity.this);
+                    builder.setTitle("Edit Ingredient");
+                    final EditText input = new EditText(
+                            IngredientActivity.this);
+                    input.setHint("Type Here");
 
-                        else {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(
-                                    IngredientActivity.this);
-                            builder.setTitle("Edit Ingredient");
-                            final EditText input = new EditText(
-                                    IngredientActivity.this);
-                            input.setHint("Type Here");
+                    builder.setView(input);
+                    builder.setPositiveButton("SAVE", (dialog, index) -> {
+                        r_Text = input.getText().toString();
+                        ingredients.set(position, new Ingredient(r_Text, "user"));
+                        Context context1 = getApplicationContext();
 
-                            builder.setView(input);
-                            builder.setPositiveButton("SAVE", new DialogInterface.OnClickListener() {
+                        sqLiteDatabase = context1.openOrCreateDatabase(
+                                "ingredients",
+                                Context.MODE_PRIVATE,
+                                null);
+                        DBHelper db1 = new DBHelper(sqLiteDatabase);
 
-                                @Override
-                                public void onClick(DialogInterface dialog, int index) {
-                                    r_Text = input.getText().toString();
-                                    ingredients.set(position, new Ingredient(r_Text, "user"));
-                                    Context context = getApplicationContext();
+                        Object itemToRemove = adapter.getItem(position);
+                        assert itemToRemove != null;
+                        String stringToRemove = itemToRemove.toString();
 
-                                    sqLiteDatabase = context.openOrCreateDatabase(
-                                            "ingredients",
-                                            Context.MODE_PRIVATE,
-                                            null);
-                                    DBHelper db = new DBHelper(sqLiteDatabase);
+                        adapter.remove(itemToRemove);
+                        db1.deleteIngredient(stringToRemove);
 
-                                    Object itemToRemove = adapter.getItem(position);
-                                    String stringToRemove = itemToRemove.toString();
+                        db1.writeIngredient(r_Text, "user");
+                        adapter.add(r_Text);
 
-                                    adapter.remove(itemToRemove);
-                                    db.deleteIngredient(stringToRemove);
+                        sqLiteDatabase.close();
+                    });
 
-                                    db.writeIngredient(r_Text, "user");
-                                    adapter.add(r_Text);
+                    builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
-                                    sqLiteDatabase.close();
-                                }
-                            });
-
-                            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                }
-                            });
-
-                            builder.show();
-                            return true;
-                        }
-                    }
-                });
-                menu.show();
-            }
+                    builder.show();
+                }
+                return true;
+            });
+            menu.show();
         });
 
         ArrayList<String> newList = new ArrayList<>();
@@ -142,43 +123,37 @@ public class IngredientActivity extends AppCompatActivity {
 
         Button clearAll = findViewById(R.id.clearButton);
 
-        clearAll.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Context context = getApplicationContext();
-                sqLiteDatabase = context.openOrCreateDatabase(
-                        "ingredients",
-                        Context.MODE_PRIVATE,
-                        null);
+        clearAll.setOnClickListener(view -> {
+            Context context12 = getApplicationContext();
+            sqLiteDatabase = context12.openOrCreateDatabase(
+                    "ingredients",
+                    Context.MODE_PRIVATE,
+                    null);
 
-                DBHelper db = new DBHelper(sqLiteDatabase);
+            DBHelper db12 = new DBHelper(sqLiteDatabase);
 
-                listView.setAdapter(emptyAdapter);
-                db.clearIngredients();
+            listView.setAdapter(emptyAdapter);
+            db12.clearIngredients();
 
-                // read cleared ingredients database to refresh screen
-                ingredients = db.readIngredients("user");
-                sqLiteDatabase.close();
-            }
+            // read cleared ingredients database to refresh screen
+            ingredients = db12.readIngredients("user");
+            sqLiteDatabase.close();
         });
 
         Button findRecipes = findViewById(R.id.findRecipes);
-        findRecipes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.i("Length of ingredients array: ", String.valueOf(ingredients.size()));
-                if (ingredients.size() == 0) {
+        findRecipes.setOnClickListener(view -> {
+            Log.i("Length of ingredients array: ", String.valueOf(ingredients.size()));
+            if (ingredients.size() == 0) {
 
-                    Toast toast = Toast.makeText(
-                            view.getContext(),
-                            "No ingredients available",
-                            Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(
+                        view.getContext(),
+                        "No ingredients available",
+                        Toast.LENGTH_SHORT);
 
-                    toast.show();
+                toast.show();
 
-                } else {
-                    addRecipes(view);
-                }
+            } else {
+                addRecipes(view);
             }
         });
 
@@ -198,17 +173,16 @@ public class IngredientActivity extends AppCompatActivity {
     }
 
     public String createStringFromList(ArrayList<Ingredient> ingredients){
-        String strIngredients = "";
-        Log.i("Info", "ingredients are: " + String.valueOf(ingredients));
-        for(int i = 0; i < ingredients.size(); i++){
-            Log.i("Info", strIngredients + String.valueOf(i));
-            strIngredients += ingredients.get(i).getName();
+        StringBuilder strIngredients = new StringBuilder();
+        Log.i("Info", "ingredients are: " + ingredients);
+        for (int i = 0; i < ingredients.size(); i++){
+            Log.i("Info", strIngredients + " " + i);
+            strIngredients.append(ingredients.get(i).getName());
             if(i != ingredients.size()-1){
-                strIngredients += ",";
+                strIngredients.append(",");
             }
-
         }
-        return strIngredients;
+        return strIngredients.toString();
     }
 
 }

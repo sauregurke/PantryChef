@@ -11,9 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.Response.Listener;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
 
@@ -28,7 +25,7 @@ import java.util.List;
 public class Recipes extends AppCompatActivity {
 
     private JSONArray JSONresponse;
-    private List<Recipe> recipeList = new ArrayList<>();
+    private final List<Recipe> recipeList = new ArrayList<>();
     RequestQueue requestQueue;
     int responseCounter = 0;
     RecyclerView recipeDisplay;
@@ -43,6 +40,7 @@ public class Recipes extends AppCompatActivity {
         Log.i("Info", "about to call createRecipes");
 
         Bundle bundle = getIntent().getExtras();
+        assert bundle != null;
         String ingredients = bundle.getString("message");
         createRecipes(ingredients);
     }
@@ -57,37 +55,28 @@ public class Recipes extends AppCompatActivity {
                 Request.Method.GET,
                 url,
                 null,
-                new Listener<JSONArray>() {
-            @Override
-            public void onResponse(JSONArray response) {
-                try {
-                    JSONresponse = response;
-                    for (int i = 0; i < JSONresponse.length(); i++) {
-                        JSONObject jsonResult;
-                        jsonResult = JSONresponse.getJSONObject(i);
-                        recipeList.add(new Recipe(
-                                jsonResult.optString("id"),
-                                jsonResult.optString("title"),
-                                jsonResult.optString("image"),
-                                null));
-                    }
-                    responseCounter--;
+                response -> {
+                    try {
+                        JSONresponse = response;
+                        for (int i = 0; i < JSONresponse.length(); i++) {
+                            JSONObject jsonResult;
+                            jsonResult = JSONresponse.getJSONObject(i);
+                            recipeList.add(new Recipe(
+                                    jsonResult.optString("id"),
+                                    jsonResult.optString("title"),
+                                    null));
+                        }
+                        responseCounter--;
 
-                    if (responseCounter == 0) {
-                        launchRecipes();
-                    }
+                        if (responseCounter == 0) {
+                            launchRecipes();
+                        }
 
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.i("Response contained an error: ", error.toString());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                }
+                },
+                error -> Log.i("Response contained an error: ", error.toString())
         );
         responseCounter++;
         requestQueue.add(jsonObjectRequest);
@@ -97,7 +86,7 @@ public class Recipes extends AppCompatActivity {
 
         ItemArrayAdapter adapter = new ItemArrayAdapter(
                 R.layout.linear_recipe_layout,
-                new ArrayList<Recipe>(recipeList),
+                new ArrayList<>(recipeList),
                 this);
         recipeDisplay = findViewById(R.id.recyclerView);
         recipeDisplay.setLayoutManager(new LinearLayoutManager(this));

@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="Pantry Chef"
+        android:text="@string/pantry_chef"
         android:textAlignment="center"
         android:textSize="38sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -25,8 +25,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:text="View your list"
-        android:textSize="20dp"
+        android:text="@string/view_your_list"
+        android:textSize="20sp"
         android:onClick="viewIngredients"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -37,8 +37,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="30dp"
-        android:textSize="25dp"
-        android:text="Add your ingredients here"
+        android:textSize="25sp"
+        android:text="@string/add_your_ingredients_here"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/yourListButton" />
@@ -60,14 +60,16 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="text"
-            android:hint="Enter an ingredient"/>
+            android:hint="@string/enter_an_ingredient"
+            android:autofillHints="" />
         <ImageButton
             android:id="@+id/ingredientSaveButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="writeIngredient"
-            android:layout_marginLeft="20dp"
-            app:srcCompat="@android:drawable/ic_menu_save" />
+            android:layout_marginStart="20dp"
+            app:srcCompat="@android:drawable/ic_menu_save"
+            android:contentDescription="@string/save_ingredient_to_your_list" />
     </LinearLayout>
 
     <TextView
@@ -76,7 +78,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="20dp"
-        android:text="Or, add from receipt"
+        android:text="@string/add_from_receipt"
         android:textAlignment="center"
         android:textSize="25sp"
         app:layout_constraintEnd_toEndOf="parent"
