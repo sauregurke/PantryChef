@@ -10,31 +10,31 @@ public class DBHelper {
 
     public void createTable(){
         ingredientDatabase.execSQL("CREATE TABLE IF NOT EXISTS ingredients " +
-                "(id INTENGER PRIMARY KEY, username TEXT,name TEXT)");
+                "(id INTENGER PRIMARY KEY, username TEXT, name TEXT)");
     }
     public DBHelper(SQLiteDatabase sqLiteDatabase) { this.ingredientDatabase = sqLiteDatabase; }
 
     public void clearIngredients() {
         createTable();
-        ingredientDatabase.execSQL(String.format("DROP TABLE ingredients"));
+        ingredientDatabase.execSQL("DROP TABLE IF EXISTS ingredients");
     }
 
     public void deleteIngredient(String ingredient){
         createTable();
-        ingredientDatabase.execSQL(String.format("DELETE FROM ingredients WHERE name = '%s'",
-                ingredient));
+        ingredientDatabase.execSQL("DELETE FROM ingredients WHERE name = '%s'",
+                new Object[]{ingredient});
     }
     public void writeIngredient(String name, String user){
         createTable();
-        ingredientDatabase.execSQL(String.format("INSERT INTO ingredients (name, username) " +
-                        "VALUES ('%s','%s')", name, user));
+        String query = "INSERT INTO ingredients (name, username) VALUES (?, ?)";
+        ingredientDatabase.execSQL(query, new Object[]{name, user});
     }
 
     public ArrayList<Ingredient> readIngredients(String username) {
         createTable();
 
-        Cursor c = ingredientDatabase.rawQuery(String.format("SELECT * from ingredients " +
-                "where username like '%s'",username),null);
+        Cursor c = ingredientDatabase.rawQuery("SELECT * FROM ingredients " +
+                "WHERE username = ?", new String[]{username});
         int nameColumn = c.getColumnIndex("name");
         c.moveToFirst();
 

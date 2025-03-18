@@ -195,9 +195,13 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
 
+                // deprecated
+                /*
                 Toast.makeText(getApplicationContext(),
                         "PantryChef needs access to your storage to store your ingredients.",
                         Toast.LENGTH_SHORT).show();
+
+                 */
             } else {
                 chooseImage(MainActivity.this);
             }
