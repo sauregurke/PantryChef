@@ -156,7 +156,6 @@ public class IngredientActivity extends AppCompatActivity {
                 addRecipes(view);
             }
         });
-
     }
     public void addMoreIngredients(View view){
         Intent intent = new Intent(this, MainActivity.class);
@@ -164,7 +163,7 @@ public class IngredientActivity extends AppCompatActivity {
     }
 
     public void addRecipes(View view){
-        Intent intent = new Intent(this, Recipes.class);
+        Intent intent = new Intent(this, RecipeActivity.class);
 
         String ingredientString = createStringFromList(ingredients);
         intent.putExtra("message", ingredientString);
@@ -174,11 +173,10 @@ public class IngredientActivity extends AppCompatActivity {
 
     public String createStringFromList(ArrayList<Ingredient> ingredients){
         StringBuilder strIngredients = new StringBuilder();
-        Log.i("Info", "ingredients are: " + ingredients);
         for (int i = 0; i < ingredients.size(); i++){
-            Log.i("Info", strIngredients + " " + i);
             strIngredients.append(ingredients.get(i).getName());
-            if(i != ingredients.size()-1){
+
+            if (i != ingredients.size() - 1){
                 strIngredients.append(",");
             }
         }

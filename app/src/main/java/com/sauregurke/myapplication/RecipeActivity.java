@@ -1,8 +1,10 @@
 package com.sauregurke.myapplication;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -22,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class Recipes extends AppCompatActivity {
+public class RecipeActivity extends AppCompatActivity {
 
     private JSONArray JSONresponse;
     private final List<Recipe> recipeList = new ArrayList<>();
@@ -35,7 +37,7 @@ public class Recipes extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recipes);
-        recipeDisplay = (RecyclerView) findViewById(R.id.recyclerView);
+        recipeDisplay = findViewById(R.id.recyclerView);
 
         Log.i("Info", "about to call createRecipes");
 
@@ -43,6 +45,12 @@ public class Recipes extends AppCompatActivity {
         assert bundle != null;
         String ingredients = bundle.getString("message");
         createRecipes(ingredients);
+
+    }
+
+    public void viewIngredients(View view) {
+        Intent intent = new Intent(this, IngredientActivity.class);
+        startActivity(intent);
     }
 
     public void createRecipes(String searchText) {

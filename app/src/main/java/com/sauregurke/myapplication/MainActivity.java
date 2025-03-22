@@ -140,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
             }
     );
 
-
     private void openGallery() {
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         openGalleryActivityLauncher.launch(galleryIntent);
@@ -191,17 +190,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),
                         "PantryChef needs camera access to scan your receipt.",
                         Toast.LENGTH_SHORT).show();
-            } else if (ContextCompat.checkSelfPermission(MainActivity.this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                // deprecated
-                /*
-                Toast.makeText(getApplicationContext(),
-                        "PantryChef needs access to your storage to store your ingredients.",
-                        Toast.LENGTH_SHORT).show();
-
-                 */
             } else {
                 chooseImage(MainActivity.this);
             }
@@ -225,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
                     MULTIPLE_PERMISSIONS_REQUEST_ID);
             return false;
         }
+
         return true;
     }
 
@@ -277,10 +266,12 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < blocks.size(); i++) {
             List<Text.Line> lines = blocks.get(i).getLines();
             StringBuilder word = new StringBuilder();
+
             for (int j = 0; j < lines.size(); j++) {
                 List<Text.Element> elements = lines.get(j).getElements();
+
                 for (int k = 0; k < elements.size(); k++) {
-                    if (elements.get(k).getText().matches(".*\\d.*")
+                    if (elements.get(k).getText().matches(".*\\d.*") // any line with at least one digit
                             || elements.get(k).getText().length() < 3) {
                         continue;
                     }
@@ -314,18 +305,18 @@ public class MainActivity extends AppCompatActivity {
 
         DBHelper db = new DBHelper(ingredientDatabase);
         ArrayList<String> removals = new ArrayList<>();
-        removals.add("DATE");
-        removals.add("SPECIAL");
-        removals.add("NET");
-        removals.add("NET ");
-        removals.add("SPECIAL ");
-        removals.add("SUBTOTAL");
-        removals.add("LOYALTY");
-        removals.add("TOTAL");
         removals.add("CASH");
         removals.add("CHANGE");
+        removals.add("DATE");
+        removals.add("LOYALTY");
+        removals.add("NET");
+        removals.add("NET ");
+        removals.add("SPECIAL");
+        removals.add("SPECIAL ");
+        removals.add("SUBTOTAL");
+        removals.add("TOTAL");
+
         textBlocks.removeAll(removals);
-        Log.i("checkText", String.valueOf(textBlocks));
 
         for (int i = 0; i < textBlocks.size(); i++) {
             db.writeIngredient(textBlocks.get(i), "user");
@@ -361,6 +352,7 @@ public class MainActivity extends AppCompatActivity {
     public void presentImage(Bitmap imageMap) {
         rGraphicOverlay.clear();
         rSelectedImage = imageMap;
+
         if (rSelectedImage != null) {
             Pair<Integer, Integer> targetedSize = getTargetedWidthHeight();
 

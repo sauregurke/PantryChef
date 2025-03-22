@@ -35,10 +35,11 @@ public class DBHelper {
 
         Cursor c = ingredientDatabase.rawQuery("SELECT * FROM ingredients " +
                 "WHERE username = ?", new String[]{username});
-        int nameColumn = c.getColumnIndex("name");
-        c.moveToFirst();
 
+        int nameColumn = c.getColumnIndex("name");
         ArrayList<Ingredient> derivedList = new ArrayList<>();
+
+        c.moveToFirst();
 
         while (!c.isAfterLast()) {
             String name = c.getString(nameColumn);

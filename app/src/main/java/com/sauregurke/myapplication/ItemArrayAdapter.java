@@ -32,6 +32,12 @@ public class ItemArrayAdapter extends RecyclerView.Adapter<ItemArrayAdapter.View
 
         private final Context context;
 
+        RequestQueue requestQueueLink;
+
+        JSONObject JSONResponse;
+
+        int responseCounterLink = 0;
+
         public ItemArrayAdapter(int layoutId, ArrayList<Recipe> itemList, Context context) {
             listItemLayout = layoutId;
             this.itemList = itemList;
@@ -58,19 +64,14 @@ public class ItemArrayAdapter extends RecyclerView.Adapter<ItemArrayAdapter.View
             TextView item = holder.item;
             item.setText(itemList.get(listPosition).getName());
             holder.itemview.setOnClickListener(view ->
-                    getRecipeLinks(itemList.get(listPosition).getid(), listPosition));
+                    getRecipeLinks(itemList.get(listPosition).getID(), listPosition));
 
         }
 
-
-        RequestQueue requestQueueLink;
-        JSONObject JSONresponse;
-        int responseCounterLink = 0;
-
         private void getRecipeLinks(String ID, int position){
-            if(ID == null){
+            if (ID == null) {
                 Log.i("ERROR", "Recipe ID is NULL");
-            }else {
+            } else {
                 String url = "https://api.spoonacular.com/recipes/"
                         + ID
                         + "/information?apiKey=ef1a4c29f9704500aa8bcd1e00bd0666";
@@ -81,7 +82,7 @@ public class ItemArrayAdapter extends RecyclerView.Adapter<ItemArrayAdapter.View
                         null,
                         response -> {
                             try {
-                                JSONresponse = response;
+                                JSONResponse = response;
                                 JSONObject jsonObject1 = new JSONObject(response.toString());
                                 itemList.get(position).setLink(jsonObject1.optString("spoonacularSourceUrl"));
 
@@ -95,7 +96,7 @@ public class ItemArrayAdapter extends RecyclerView.Adapter<ItemArrayAdapter.View
                                 e.printStackTrace();
                             }
                         },
-                        error -> Log.i("the res is error in second call:", error.toString())
+                        error -> Log.i("The response returned an error: ", error.toString())
                 );
 
                 responseCounterLink++;
@@ -118,6 +119,7 @@ public class ItemArrayAdapter extends RecyclerView.Adapter<ItemArrayAdapter.View
                 item = itemView.findViewById(R.id.recipe_name);
                 itemview = itemView;
             }
+
             @Override
             public void onClick(View view) {
 
